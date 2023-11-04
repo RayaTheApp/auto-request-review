@@ -73,15 +73,15 @@ async function run() {
   }
 
   if (requested_reviewer_usernames && requested_reviewer_usernames.length > 0) {
-    core.info('Removing requested reviewers: ' + JSON.stringify(requested_reviewers));
-    let requestedReviewerSet = new Set(requested_reviewers);
+    core.info('Removing requested reviewers: ' + JSON.stringify(requested_reviewer_usernames));
+    let requestedReviewerSet = new Set(requested_reviewer_usernames);
     reviewers = reviewers.filter((reviewer) => !requestedReviewerSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
   }
 
   if (assignee_usernames && assignee_usernames.length > 0) {
-    core.info('Removing assigned reviewers: ' + JSON.stringify(assignees));
-    let assigneeSet = new Set(assignees);
+    core.info('Removing assigned reviewers: ' + JSON.stringify(assignee_usernames));
+    let assigneeSet = new Set(assignee_usernames);
     reviewers = reviewers.filter((reviewer) => !assigneeSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
   }
