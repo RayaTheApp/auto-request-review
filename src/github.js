@@ -30,9 +30,17 @@ class PullRequest {
   get requested_reviewers() {
     return this._pull_request_payload.requested_reviewers;
   } 
+
+  get requested_reviewer_usernames() {
+    return this.requested_reviewers().map(rev => rev.login);
+  }
   
   get assignees() {
     return this._pull_request_payload.assignees;
+  }
+  
+  get assignee_usernames() {
+    return this.assignees().map(rev => rev.login);
   }
 }
 

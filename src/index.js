@@ -34,7 +34,7 @@ async function run() {
     throw error;
   }
 
-  const { title, is_draft, author, requested_reviewers, assignees } = github.get_pull_request();
+  const { title, is_draft, author, requested_reviewer_usernames, assignee_usernames } = github.get_pull_request();
 
   if (!should_request_review({ title, is_draft, config })) {
     core.info('Matched the ignoring rules; terminating the process');
@@ -72,14 +72,14 @@ async function run() {
     reviewers.push(...default_reviewers);
   }
 
-  if (requested_reviewers && requested_reviewers.length > 0) {
+  if (requested_reviewer_usernames && requested_reviewer_usernames.length > 0) {
     core.info('Removing requested reviewers: ' + JSON.stringify(requested_reviewers));
     let requestedReviewerSet = new Set(requested_reviewers);
     reviewers = reviewers.filter((reviewer) => !requestedReviewerSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
   }
 
-  if (assignees && assignees.length > 0) {
+  if (assignee_usernames && assignee_usernames.length > 0) {
     core.info('Removing assigned reviewers: ' + JSON.stringify(assignees));
     let assigneeSet = new Set(assignees);
     reviewers = reviewers.filter((reviewer) => !assigneeSet.has(reviewer));
