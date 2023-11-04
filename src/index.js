@@ -75,14 +75,14 @@ async function run() {
   if (requested_reviewers && requested_reviewers.length > 0) {
     core.info('Removing requested reviewers: ' + JSON.stringify(requested_reviewers));
     let requestedReviewerSet = new Set(requested_reviewers);
-    reviewers = reviewers.filter((reviewer) => !requestedReviewerSet.contains(reviewer));
+    reviewers = reviewers.filter((reviewer) => !requestedReviewerSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
   }
 
   if (assignees && assignees.length > 0) {
     core.info('Removing assigned reviewers: ' + JSON.stringify(assignees));
     let assigneeSet = new Set(assignees);
-    reviewers = reviewers.filter((reviewer) => !assigneeSet.contains(reviewer));
+    reviewers = reviewers.filter((reviewer) => !assigneeSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
   }
 
