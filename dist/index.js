@@ -39219,7 +39219,7 @@ class PullRequest {
   } 
 
   get requested_reviewer_usernames() {
-    return this.requested_reviewers().map(rev => rev.login);
+    return this.requested_reviewers.map(rev => rev.login);
   }
   
   get assignees() {
@@ -39227,7 +39227,7 @@ class PullRequest {
   }
   
   get assignee_usernames() {
-    return this.assignees().map(rev => rev.login);
+    return this.assignees.map(rev => rev.login);
   }
 }
 
