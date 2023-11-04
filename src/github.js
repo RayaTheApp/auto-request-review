@@ -9,22 +9,30 @@ const { LOCAL_FILE_MISSING } = require('./constants');
 
 class PullRequest {
   // ref: https://developer.github.com/v3/pulls/#get-a-pull-request
-  constructor(pull_request_paylaod) {
+  constructor(pull_request_payload) {
     // "ncc" doesn't yet support private class fields as of 29 Aug. 2020
     // ref: https://github.com/vercel/ncc/issues/499
-    this._pull_request_paylaod = pull_request_paylaod;
+    this._pull_request_payload = pull_request_payload;
   }
 
   get author() {
-    return this._pull_request_paylaod.user.login;
+    return this._pull_request_payload.user.login;
   }
 
   get title() {
-    return this._pull_request_paylaod.title;
+    return this._pull_request_payload.title;
   }
 
   get is_draft() {
-    return this._pull_request_paylaod.draft;
+    return this._pull_request_payload.draft;
+  }
+
+  get requested_reviewers() {
+    return this._pull_request_payload.requested_reviewers;
+  } 
+  
+  get assignees() {
+    return this._pull_request_payload.assignees;
   }
 }
 
