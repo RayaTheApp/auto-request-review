@@ -39216,18 +39216,18 @@ class PullRequest {
 
   get requested_reviewers() {
     return this._pull_request_payload.requested_reviewers;
-  } 
+  }
 
   get requested_reviewer_usernames() {
-    return this.requested_reviewers.map(rev => rev.login);
+    return this.requested_reviewers.map((rev) => rev.login);
   }
-  
+
   get assignees() {
     return this._pull_request_payload.assignees;
   }
-  
+
   get assignee_usernames() {
-    return this.assignees.map(rev => rev.login);
+    return this.assignees.map((rev) => rev.login);
   }
 }
 
@@ -39243,6 +39243,9 @@ async function fetch_config() {
   const config_path = get_config_path();
   const useLocal = get_use_local();
   const numberOfReviewers = get_number_of_reviewers();
+  const numberOfAssignees = get_number_of_assignees();
+
+  core.info(`Received ${numberOfReviewers} reviewers and ${numberOfAssignees} assignees from inputs.`);
 
   let content = '';
 
@@ -39269,11 +39272,14 @@ async function fetch_config() {
     }
   }
 
-  let config = yaml.parse(content);
+  const config = yaml.parse(content);
   if (numberOfReviewers) {
     config.options.number_of_reviewers = numberOfReviewers;
   }
-  
+  if (numberOfAssignees) {
+    config.options.number_of_assignees = numberOfAssignees;
+  }
+
   return config;
 }
 
@@ -39322,6 +39328,17 @@ async function assign_reviewers(reviewers) {
   });
 }
 
+async function assign_assignees(assignees) {
+  const context = get_context();
+  const octokit = get_octokit();
+  return octokit.issues.addAssignees({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    issue_number: context.payload.pull_request.number,
+    assignees: assignees
+  });
+}
+
 /* Private */
 
 let context_cache;
@@ -39350,6 +39367,10 @@ function get_number_of_reviewers() {
   return core.getInput('number_of_reviewers');
 }
 
+function get_number_of_assignees() {
+  return core.getInput('number_of_assignees');
+}
+
 function get_octokit() {
   if (octokit_cache) {
     return octokit_cache;
@@ -39371,6 +39392,7 @@ module.exports = {
   fetch_config,
   fetch_changed_files,
   assign_reviewers,
+  assign_assignees,
   clear_cache,
 };
 
@@ -39394,6 +39416,7 @@ const {
   should_request_review,
   fetch_default_reviewers,
   randomly_pick_reviewers,
+  randomly_pick_assignees,
 } = __nccwpck_require__(5089);
 
 async function run() {
@@ -39438,9 +39461,11 @@ async function run() {
   core.info('Adding other group members to reviewers if group assignment feature is on');
   const reviewers_from_same_teams = fetch_other_group_members({ config, author });
   core.info('Added: ' + JSON.stringify(reviewers_from_same_teams));
-  
+
   let reviewers = [ ...new Set([ ...reviewers_based_on_files, ...reviewers_based_on_author, ...reviewers_from_same_teams ]) ];
   core.info('Reviewers identified: ' + JSON.stringify(reviewers));
+
+  core.info(`Config Options: ${JSON.stringify(config.options)}`)
 
   if (reviewers.length === 0) {
     core.info('Matched no reviewers');
@@ -39456,25 +39481,35 @@ async function run() {
   }
 
   if (requested_reviewer_usernames && requested_reviewer_usernames.length > 0) {
-    core.info('Removing requested reviewers: ' + JSON.stringify(requested_reviewer_usernames));
-    let requestedReviewerSet = new Set(requested_reviewer_usernames);
+    core.info('Removing already requested reviewers: ' + JSON.stringify(requested_reviewer_usernames));
+    const requestedReviewerSet = new Set(requested_reviewer_usernames);
     reviewers = reviewers.filter((reviewer) => !requestedReviewerSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
   }
 
   if (assignee_usernames && assignee_usernames.length > 0) {
-    core.info('Removing assigned reviewers: ' + JSON.stringify(assignee_usernames));
-    let assigneeSet = new Set(assignee_usernames);
+    core.info('Removing already assigned reviewers: ' + JSON.stringify(assignee_usernames));
+    const assigneeSet = new Set(assignee_usernames);
     reviewers = reviewers.filter((reviewer) => !assigneeSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
   }
 
   core.info('Randomly picking reviewers if the number of reviewers is set');
-  reviewers = randomly_pick_reviewers({ reviewers, config });
+  const requested_reviewers = randomly_pick_reviewers({ reviewers, config });
+  core.info(`Requesting reviewers: ${requested_reviewers.join(', ')}`);
 
-  core.info(`Requesting review to ${reviewers.join(', ')}`);
-  await github.assign_reviewers(reviewers);
-  core.setOutput('requested_reviewers', reviewers.join(','));
+  if (requested_reviewers && requested_reviewers.length > 0) {
+    const requestedReviewersSet = new Set(requested_reviewers);
+    reviewers = reviewers.filter((rev) => !requestedReviewersSet.has(rev));
+    core.info(`Removing added requested reviewers to now have: ${reviewers}`);
+  }
+  const assigned_reviewers = randomly_pick_assignees({ reviewers, config });
+  core.info(`Requesting assignees: ${assigned_reviewers.join(', ')}`);
+
+  await github.assign_reviewers(requested_reviewers);
+  await github.assign_assignees(assigned_reviewers);
+  core.setOutput('requested_reviewers', requested_reviewers.join(','));
+  core.setOutput('assigned_reviewers', assigned_reviewers.join(','));
 }
 
 module.exports = {
@@ -39618,6 +39653,18 @@ function fetch_default_reviewers({ config, excludes = [] }) {
   return [ ...new Set(individuals) ].filter((reviewer) => !excludes.includes(reviewer));
 }
 
+function randomly_pick_assignees({ reviewers, config }) {
+  const { number_of_assignees } = {
+    ...config.options,
+  };
+
+  if (number_of_assignees === undefined) {
+    return reviewers;
+  }
+
+  return sample_size(reviewers, number_of_assignees);
+}
+
 function randomly_pick_reviewers({ reviewers, config }) {
   const { number_of_reviewers } = {
     ...config.options,
@@ -39646,6 +39693,7 @@ module.exports = {
   should_request_review,
   fetch_default_reviewers,
   randomly_pick_reviewers,
+  randomly_pick_assignees
 };
 
 

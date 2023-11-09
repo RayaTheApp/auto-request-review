@@ -15,6 +15,7 @@ describe('index', function() {
       sinon.stub(github, 'fetch_config');
       sinon.stub(github, 'fetch_changed_files');
       sinon.stub(github, 'assign_reviewers');
+      sinon.stub(github, 'assign_assignees');
     });
 
     afterEach(function() {
@@ -22,6 +23,7 @@ describe('index', function() {
       github.fetch_config.restore();
       github.fetch_changed_files.restore();
       github.assign_reviewers.restore();
+      github.assign_assignees.restore();
     });
 
     it('requests review based on files changed', async function() {

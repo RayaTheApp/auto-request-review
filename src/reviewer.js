@@ -123,6 +123,18 @@ function fetch_default_reviewers({ config, excludes = [] }) {
   return [ ...new Set(individuals) ].filter((reviewer) => !excludes.includes(reviewer));
 }
 
+function randomly_pick_assignees({ reviewers, config }) {
+  const { number_of_assignees } = {
+    ...config.options,
+  };
+
+  if (number_of_assignees === undefined) {
+    return reviewers;
+  }
+
+  return sample_size(reviewers, number_of_assignees);
+}
+
 function randomly_pick_reviewers({ reviewers, config }) {
   const { number_of_reviewers } = {
     ...config.options,
@@ -151,4 +163,5 @@ module.exports = {
   should_request_review,
   fetch_default_reviewers,
   randomly_pick_reviewers,
+  randomly_pick_assignees
 };

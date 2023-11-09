@@ -11,6 +11,7 @@ const {
   should_request_review,
   fetch_default_reviewers,
   randomly_pick_reviewers,
+  randomly_pick_assignees,
 } = require('./reviewer');
 
 async function run() {
@@ -55,9 +56,11 @@ async function run() {
   core.info('Adding other group members to reviewers if group assignment feature is on');
   const reviewers_from_same_teams = fetch_other_group_members({ config, author });
   core.info('Added: ' + JSON.stringify(reviewers_from_same_teams));
-  
+
   let reviewers = [ ...new Set([ ...reviewers_based_on_files, ...reviewers_based_on_author, ...reviewers_from_same_teams ]) ];
   core.info('Reviewers identified: ' + JSON.stringify(reviewers));
+
+  core.info(`Config Options: ${JSON.stringify(config.options)}`)
 
   if (reviewers.length === 0) {
     core.info('Matched no reviewers');
@@ -73,25 +76,35 @@ async function run() {
   }
 
   if (requested_reviewer_usernames && requested_reviewer_usernames.length > 0) {
-    core.info('Removing requested reviewers: ' + JSON.stringify(requested_reviewer_usernames));
-    let requestedReviewerSet = new Set(requested_reviewer_usernames);
+    core.info('Removing already requested reviewers: ' + JSON.stringify(requested_reviewer_usernames));
+    const requestedReviewerSet = new Set(requested_reviewer_usernames);
     reviewers = reviewers.filter((reviewer) => !requestedReviewerSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
   }
 
   if (assignee_usernames && assignee_usernames.length > 0) {
-    core.info('Removing assigned reviewers: ' + JSON.stringify(assignee_usernames));
-    let assigneeSet = new Set(assignee_usernames);
+    core.info('Removing already assigned reviewers: ' + JSON.stringify(assignee_usernames));
+    const assigneeSet = new Set(assignee_usernames);
     reviewers = reviewers.filter((reviewer) => !assigneeSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
   }
 
   core.info('Randomly picking reviewers if the number of reviewers is set');
-  reviewers = randomly_pick_reviewers({ reviewers, config });
+  const requested_reviewers = randomly_pick_reviewers({ reviewers, config });
+  core.info(`Requesting reviewers: ${requested_reviewers.join(', ')}`);
 
-  core.info(`Requesting review to ${reviewers.join(', ')}`);
-  await github.assign_reviewers(reviewers);
-  core.setOutput('requested_reviewers', reviewers.join(','));
+  if (requested_reviewers && requested_reviewers.length > 0) {
+    const requestedReviewersSet = new Set(requested_reviewers);
+    reviewers = reviewers.filter((rev) => !requestedReviewersSet.has(rev));
+    core.info(`Removing added requested reviewers to now have: ${reviewers}`);
+  }
+  const assigned_reviewers = randomly_pick_assignees({ reviewers, config });
+  core.info(`Requesting assignees: ${assigned_reviewers.join(', ')}`);
+
+  await github.assign_reviewers(requested_reviewers);
+  await github.assign_assignees(assigned_reviewers);
+  core.setOutput('requested_reviewers', requested_reviewers.join(','));
+  core.setOutput('assigned_reviewers', assigned_reviewers.join(','));
 }
 
 module.exports = {

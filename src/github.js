@@ -29,18 +29,18 @@ class PullRequest {
 
   get requested_reviewers() {
     return this._pull_request_payload.requested_reviewers;
-  } 
+  }
 
   get requested_reviewer_usernames() {
-    return this.requested_reviewers.map(rev => rev.login);
+    return this.requested_reviewers.map((rev) => rev.login);
   }
-  
+
   get assignees() {
     return this._pull_request_payload.assignees;
   }
-  
+
   get assignee_usernames() {
-    return this.assignees.map(rev => rev.login);
+    return this.assignees.map((rev) => rev.login);
   }
 }
 
@@ -56,6 +56,9 @@ async function fetch_config() {
   const config_path = get_config_path();
   const useLocal = get_use_local();
   const numberOfReviewers = get_number_of_reviewers();
+  const numberOfAssignees = get_number_of_assignees();
+
+  core.info(`Received ${numberOfReviewers} reviewers and ${numberOfAssignees} assignees from inputs.`);
 
   let content = '';
 
@@ -82,11 +85,14 @@ async function fetch_config() {
     }
   }
 
-  let config = yaml.parse(content);
+  const config = yaml.parse(content);
   if (numberOfReviewers) {
     config.options.number_of_reviewers = numberOfReviewers;
   }
-  
+  if (numberOfAssignees) {
+    config.options.number_of_assignees = numberOfAssignees;
+  }
+
   return config;
 }
 
@@ -135,6 +141,17 @@ async function assign_reviewers(reviewers) {
   });
 }
 
+async function assign_assignees(assignees) {
+  const context = get_context();
+  const octokit = get_octokit();
+  return octokit.issues.addAssignees({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    issue_number: context.payload.pull_request.number,
+    assignees: assignees
+  });
+}
+
 /* Private */
 
 let context_cache;
@@ -163,6 +180,10 @@ function get_number_of_reviewers() {
   return core.getInput('number_of_reviewers');
 }
 
+function get_number_of_assignees() {
+  return core.getInput('number_of_assignees');
+}
+
 function get_octokit() {
   if (octokit_cache) {
     return octokit_cache;
@@ -184,5 +205,6 @@ module.exports = {
   fetch_config,
   fetch_changed_files,
   assign_reviewers,
+  assign_assignees,
   clear_cache,
 };

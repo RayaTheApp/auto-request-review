@@ -13,11 +13,18 @@ inputs:
     required: false
     default: 'false'
   number_of_reviewers:
+    description: 'The number of reviewers to add'
     required: false
-    default: 2
+    default: 1
+  number_of_assignees:
+    description: 'The number of assignees to add'
+    required: false
+    default: 1
 outputs:
   requested_reviewers:
     description: 'A comma seperated list of github usernames'
+  assigned_reviewers:
+    description: 'A comma separated list of github usernames'
 runs:
   using: 'node16'
   main: 'dist/index.js'
