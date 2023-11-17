@@ -39447,6 +39447,9 @@ async function run() {
     return;
   }
 
+  core.info(`Requested reviewer usernames found: ${requested_reviewer_usernames}`);
+  core.info(`Assigned reviewer usernames found: ${assignee_usernames}`);
+
   core.info('Fetching changed files in the pull request');
   const changed_files = await github.fetch_changed_files();
 
