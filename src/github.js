@@ -59,7 +59,7 @@ async function fetch_config() {
   const numberOfAssignees = get_number_of_assignees();
   const ignoredReviewers = get_ignored_reviewers();
 
-  core.info(`Received ${numberOfReviewers} reviewers and ${numberOfAssignees} assignees from inputs.`);
+  core.info(`Received ${numberOfReviewers} reviewers, ${numberOfAssignees} assignees, and ${ignoredReviewers} ignored from inputs.`);
 
   let content = '';
 
@@ -97,6 +97,7 @@ async function fetch_config() {
     config.options.ignored_reviewers = ignoredReviewers;
   }
 
+  core.info(`Final Fetched Config: ${JSON.stringify(config)}`);
   return config;
 }
 
