@@ -57,6 +57,7 @@ async function fetch_config() {
   const useLocal = get_use_local();
   const numberOfReviewers = get_number_of_reviewers();
   const numberOfAssignees = get_number_of_assignees();
+  const ignoredReviewers = get_ignored_reviewers();
 
   core.info(`Received ${numberOfReviewers} reviewers and ${numberOfAssignees} assignees from inputs.`);
 
@@ -91,6 +92,9 @@ async function fetch_config() {
   }
   if (numberOfAssignees) {
     config.options.number_of_assignees = numberOfAssignees;
+  }
+  if (ignoredReviewers) {
+    config.options.ignored_reviewers = ignoredReviewers;
   }
 
   return config;
@@ -174,6 +178,10 @@ function get_config_path() {
 
 function get_use_local() {
   return use_local_cache ?? (use_local_cache = core.getInput('use_local') === 'true');
+}
+
+function get_ignored_reviewers() {
+  return core.getInput('ignored_reviewers');
 }
 
 function get_number_of_reviewers() {

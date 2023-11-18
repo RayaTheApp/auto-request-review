@@ -35,6 +35,7 @@ async function run() {
     throw error;
   }
 
+  const { ignoredReviewers } = config;
   const { title, is_draft, author, requested_reviewer_usernames, assignee_usernames } = github.get_pull_request();
 
   if (!should_request_review({ title, is_draft, config })) {
@@ -43,7 +44,8 @@ async function run() {
   }
 
   core.info(`Requested reviewer usernames found: ${requested_reviewer_usernames}`);
-  core.info(`Assigned reviewer usernames found: ${assignee_usernames}`);
+  core.info(`Assigned reviewer usernames found: ${assignee_usernames}`);  
+  core.info(`Ignored reviewers found: ${ignoredReviewers}`);
 
   core.info('Fetching changed files in the pull request');
   const changed_files = await github.fetch_changed_files();
@@ -90,6 +92,13 @@ async function run() {
     const assigneeSet = new Set(assignee_usernames);
     reviewers = reviewers.filter((reviewer) => !assigneeSet.has(reviewer));
     core.info('Reviewers now: ' + JSON.stringify(reviewers));
+  }
+
+  if (ignoredReviewers && ignoredReviewers.length > 0) {
+    core.info(`Removing ignored reviewers: ${ignoredReviewers}`);
+    const ignoredSet = new Set(ignoredReviewers.split(','));
+    reviewers = reviewers.filter(rev => ignoredSet.has(rev));
+    core.info(`Reviewers now: ${JSON.stringify(reviewers)}`);
   }
 
   core.info('Randomly picking reviewers if the number of reviewers is set');
