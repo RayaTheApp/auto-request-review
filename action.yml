@@ -19,7 +19,7 @@ inputs:
   number_of_assignees:
     description: 'The number of assignees to add'
     required: false
-    default: '1'
+    default: '0'
   ignored_reviewers:
     description: 'A comma separated list of reviewers to NOT add as reviewers'
     required: false
