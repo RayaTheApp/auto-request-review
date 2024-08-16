@@ -147,6 +147,11 @@ function randomly_pick_reviewers({ reviewers, config }) {
   return sample_size(reviewers, number_of_reviewers);
 }
 
+function randomly_pick_assignees_from_list({ reviewers, number_of_assignees }) {
+  core.info(`Randomly picking ${number_of_assignees} assignees from list: ${reviewers}`);
+  return sample_size(reviewers, number_of_assignees);
+}
+
 /* Private */
 
 function replace_groups_with_individuals({ reviewers, config }) {
@@ -163,5 +168,6 @@ module.exports = {
   should_request_review,
   fetch_default_reviewers,
   randomly_pick_reviewers,
-  randomly_pick_assignees
+  randomly_pick_assignees,
+  randomly_pick_assignees_from_list,
 };

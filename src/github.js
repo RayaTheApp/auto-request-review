@@ -153,7 +153,7 @@ async function assign_assignees(assignees) {
     owner: context.repo.owner,
     repo: context.repo.repo,
     issue_number: context.payload.pull_request.number,
-    assignees: assignees
+    assignees: assignees,
   });
 }
 
