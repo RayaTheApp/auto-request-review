@@ -96,6 +96,12 @@ async function fetch_config() {
   if (ignoredReviewers) {
     config.options.ignored_reviewers = ignoredReviewers;
   }
+  
+  // Add the ignored_assignees from input
+  const ignoredAssignees = get_ignored_assignees();
+  if (ignoredAssignees) {
+    config.options.ignored_assignees = ignoredAssignees;
+  }
 
   core.info(`Final Fetched Config: ${JSON.stringify(config)}`);
   return config;
@@ -191,6 +197,10 @@ function get_number_of_reviewers() {
 
 function get_number_of_assignees() {
   return core.getInput('number_of_assignees');
+}
+
+function get_ignored_assignees() {
+  return core.getInput('ignored_assignees');
 }
 
 function get_octokit() {

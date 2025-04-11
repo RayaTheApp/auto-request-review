@@ -38,6 +38,7 @@ describe('index', function() {
           '**/*.js': [ 'mario-brothers', 'princess-peach' ],
           '**/*.rb': [ 'wario', 'waluigi' ],
         },
+        options: {}
       };
       github.fetch_config.returns(config);
 
@@ -151,6 +152,7 @@ describe('index', function() {
           '**/*.js': [ 'mario-brothers', 'princess-peach' ],
           '**/*.rb': [ 'wario', 'waluigi' ],
         },
+        options: {}
       };
       github.fetch_config.returns(config);
 
@@ -181,6 +183,7 @@ describe('index', function() {
           '**/*.js': [ 'mario-brothers', 'princess-peach' ],
           '**/*.rb': [ 'wario', 'waluigi' ],
         },
+        options: {}
       };
       github.fetch_config.returns(config);
 
@@ -212,6 +215,7 @@ describe('index', function() {
             luigi: [ 'mario', 'waluigi' ],
           },
         },
+        options: {}
       };
       github.fetch_config.returns(config);
 
@@ -243,6 +247,7 @@ describe('index', function() {
             'mario-brothers': [ 'mario-brothers', 'waluigi' ],
           },
         },
+        options: {}
       };
       github.fetch_config.returns(config);
 
@@ -292,6 +297,40 @@ describe('index', function() {
       const randomly_picked_reviewers = github.assign_reviewers.lastCall.args[0];
       expect([ 'dr-mario', 'mario', 'waluigi' ]).to.include.members(randomly_picked_reviewers);
       expect(new Set(randomly_picked_reviewers)).to.have.lengthOf(2);
+    });
+
+    it('does not assign users listed in ignored_assignees', async function() {
+      const config = {
+        reviewers: {
+          defaults: [ 'dr-mario', 'mario', 'luigi' ],
+        },
+        options: {
+          number_of_assignees: 2,
+          ignored_assignees: 'mario,luigi'
+        },
+      };
+      github.fetch_config.returns(config);
+
+      const pull_request = {
+        title: 'Nice Pull Request',
+        is_draft: false,
+        author: 'waluigi',
+        requested_reviewer_usernames: [],
+        assignee_usernames: [],
+      };
+      github.get_pull_request.returns(pull_request);
+
+      const changed_files = [];
+      github.fetch_changed_files.returns(changed_files);
+
+      await run();
+
+      expect(github.assign_assignees.calledOnce).to.be.true;
+      const assigned = github.assign_assignees.lastCall.args[0];
+      expect(assigned).to.not.include('mario');
+      expect(assigned).to.not.include('luigi');
+      expect(assigned).to.have.lengthOf(1);
+      expect(assigned[0]).to.equal('dr-mario');
     });
   });
 });

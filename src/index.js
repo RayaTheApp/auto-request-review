@@ -35,7 +35,9 @@ async function run() {
     throw error;
   }
 
-  const { ignored_reviewers } = config.options;
+  // Initialize options if it doesn't exist
+  config.options = config.options || {};
+  const { ignored_reviewers = '' } = config.options;
   const { title, is_draft, author, requested_reviewer_usernames, assignee_usernames } = github.get_pull_request();
 
   if (!should_request_review({ title, is_draft, config })) {
@@ -122,6 +124,17 @@ async function run() {
   core.info(`Requested Reviewer Usernames: ${JSON.stringify(requested_reviewer_usernames)}`);
   core.info(`Newly Requested Reviewers: ${JSON.stringify(requested_reviewers)}`);
   core.info(`All Requested Reviewers: ${JSON.stringify(all_requested_reviewers)}`);
+
+  // Add handling for ignored assignees
+  const ignored_assignees = config.options.ignored_assignees;
+  if (ignored_assignees && ignored_assignees.length > 0) {
+    core.info(`Removing ignored assignees: ${ignored_assignees}`);
+    const ignoredAssigneesSplit = ignored_assignees.split(',');
+    const ignoredAssigneesSet = new Set(ignoredAssigneesSplit);
+    all_requested_reviewers = all_requested_reviewers.filter((rev) => !ignoredAssigneesSet.has(rev));
+    core.info(`Potential assignees after removing ignored: ${JSON.stringify(all_requested_reviewers)}`);
+  }
+
   core.info(`Picking ${number_of_assignees} assignees from ${all_requested_reviewers}.`);
   const assigned_reviewers = randomly_pick_assignees_from_list({ reviewers: all_requested_reviewers, number_of_assignees });
   core.info(`Requesting assignees: ${JSON.stringify(assigned_reviewers)}`);

@@ -24,6 +24,10 @@ inputs:
     description: 'A comma separated list of reviewers to NOT add as reviewers'
     required: false
     default: ''
+  ignored_assignees:
+    description: 'A comma separated list of users to NOT add as assignees'
+    required: false
+    default: ''
 outputs:
   requested_reviewers:
     description: 'A comma seperated list of github usernames'
